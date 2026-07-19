@@ -75,6 +75,7 @@ class Scheduler{
     vector<Job>jobs;
     IScheduleStartegy* strategy;
     vector<vector<Job>>threads;
+    mutex mtx;
 
     public:
         Scheduler(IScheduleStartegy *strat){
@@ -82,12 +83,19 @@ class Scheduler{
         }
 
         void addJob(Job job){
+            lock_guard<mutex> lock(mtx);
             jobs.push_back(job);
         }
 
         vector<vector<Job>> getSequence(int numberOfThreads){
 
-            vector<Job>res=strategy->setStrategy(jobs);
+            //we are using a copy of jpbs because if we lock the jobs directly no other thread
+            // can call addJob on jobs
+
+            vector<Job>copyJobs = jobs;
+
+            lock_guard<mutex> lock(mtx);
+            vector<Job>res=strategy->setStrategy(copyJobs);
 
             vector<vector<Job>>threads(numberOfThreads);
             
