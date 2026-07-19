@@ -74,6 +74,7 @@ class Scheduler{
 
     vector<Job>jobs;
     IScheduleStartegy* strategy;
+    vector<vector<Job>>threads;
 
     public:
         Scheduler(IScheduleStartegy *strat){
@@ -84,9 +85,19 @@ class Scheduler{
             jobs.push_back(job);
         }
 
-        vector<Job> getSequence(){
-            vector<Job>res = strategy->setStrategy(jobs);
-            return res;
+        vector<vector<Job>> getSequence(int numberOfThreads){
+
+            vector<Job>res=strategy->setStrategy(jobs);
+
+            vector<vector<Job>>threads(numberOfThreads);
+            
+            int i=0;
+            for(auto job:res){
+                threads[i%numberOfThreads].push_back(job);
+                i++;
+            }
+
+            return  threads;
         }
 
 
@@ -100,12 +111,19 @@ int main(){
     Scheduler scheduler(strategy);
 
     scheduler.addJob({"JobA",1,User::admin,Priority::p0,3,7});
-    scheduler.addJob({"JobB",1,User::root,Priority::p0,3,8});
-    scheduler.addJob({"JobC",1,User::user,Priority::p1,1,3});
+    scheduler.addJob({"JobB",28,User::root,Priority::p0,3,8});
+    scheduler.addJob({"JobC",45,User::user,Priority::p1,1,3});
+    scheduler.addJob({"JobD",12,User::user,Priority::p2,12,15});
 
-    vector<Job> scheduledSequence = scheduler.getSequence();
-    for (const auto& job : scheduledSequence) {
-        cout << job.name << " (Arrival: " << job.arivalTime << ")\n";
+    vector<vector<Job>> scheduledSequence = scheduler.getSequence(2);
+
+
+    for (int i = 0; i < scheduledSequence.size(); i++) {
+        cout << "Thread " << i << ": ";
+        for (const Job& job : scheduledSequence[i]) {
+            cout << job.name << " ";
+        }
+        cout << endl;
     }
 
     delete strategy;
